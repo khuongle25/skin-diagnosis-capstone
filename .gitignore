@@ -1,0 +1,71 @@
+# Ignore OS system files
+.DS_Store
+Thumbs.db
+
+# Ignore Python environment & dependencies
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+*.sqlite3
+*.tar.gz
+
+# Ignore pytorch and keras model files:
+# *.pth
+# *.keras
+# *.ckpt
+# *.h5
+
+# Ignore logs and temporary files
+*.log
+*.out
+*.pid
+*.swp
+*.swo
+*.swn
+.env
+
+# Ignore FastAPI-specific files
+instance/
+config.json
+.env.local
+.env.production
+
+# Ignore Node.js dependencies & build files
+node_modules/
+npm-debug.log
+yarn.lock
+dist/
+build/
+.out/
+.next/
+
+# Ignore Editor/IDE settings
+.vscode/
+.idea/
+*.sublime-workspace
+
+# Ignore Docker-related files (if using Docker)
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# Ignore Firebase (nếu dùng Firebase)
+.firebase/
+.firebaserc
+
+# Ignore notebook:
+*.ipynb
+
+# Ignore folder "backend/scraper_logs" (with all files in it):
+scraper_logs/
+chroma_db/
+notebooks/
+notebook_finetune_chatbot/
+checkpoints.zip
+model.zip
+.terraform
+checkpoints
+for-test/
+report/

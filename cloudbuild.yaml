@@ -1,0 +1,138 @@
+# options:
+#   logging: CLOUD_LOGGING_ONLY
+#   machineType: E2_HIGHCPU_8
+
+# steps:
+#   - name: 'gcr.io/cloud-builders/docker'
+#     entrypoint: 'bash'
+#     args:
+#       - '-c'
+#       - |
+#         set -e  # Exit on any error
+#         docker pull us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/backend:cache
+#         docker build \
+#           --cache-from=us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/backend:cache \
+#           --build-arg BUILDKIT_INLINE_CACHE=1 \
+#           -t us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/backend:$COMMIT_SHA \
+#           -t us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/backend:cache \
+#           ./backend
+#         docker push us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/backend:$COMMIT_SHA
+#         docker push us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/backend:cache
+#     env:
+#       - 'DOCKER_BUILDKIT=1'
+
+#   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+#     entrypoint: gcloud
+#     args:
+#       - run
+#       - deploy
+#       - skin-lesion-app
+#       - --image=us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/backend:$COMMIT_SHA
+#       - --region=us-central1
+#       - --timeout=1200
+
+# BACKEND
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+  
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -e
+        docker pull us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/backend:cache || true
+        docker build \
+          --cache-from=us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/backend:cache \
+          --build-arg BUILDKIT_INLINE_CACHE=1 \
+          -t us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/backend:cache \
+          ./backend
+        docker push us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/backend:cache
+    env:
+      - 'DOCKER_BUILDKIT=1'
+
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - skin-lesion-app
+      - --image=us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/backend:cache
+      - --region=us-central1
+      - --timeout=1200
+      - --cpu=8
+      - --memory=32Gi
+      - --allow-unauthenticated
+      - --min-instances=1
+
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -e
+        echo "==== List frontend directory ===="
+        ls -l frontend
+        echo "==== Show Dockerfile ===="
+        cat frontend/Dockerfile
+        docker pull us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/frontend:cache || true
+        docker build \
+          --cache-from=us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/frontend:cache \
+          --build-arg BUILDKIT_INLINE_CACHE=1 \
+          -t us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/frontend:$COMMIT_SHA \
+          -t us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/frontend:cache \
+          -f frontend/Dockerfile frontend
+        docker push us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/frontend:$COMMIT_SHA
+        docker push us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/frontend:cache
+    env:
+      - 'DOCKER_BUILDKIT=1'
+
+  # # Deploy frontend lên Cloud Run
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - skin-lesion-frontend
+      - --image=us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/frontend:$COMMIT_SHA
+      - --region=us-central1
+      - --platform=managed
+      - --allow-unauthenticated  
+      - --timeout=1200
+      - --cpu=4
+      - --memory=4Gi
+      - --min-instances=1
+
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -e
+        docker pull us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/sse-server:cache || true
+        docker build \
+          --cache-from=us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/sse-server:cache \
+          --build-arg BUILDKIT_INLINE_CACHE=1 \
+          -t us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/sse-server:$COMMIT_SHA \
+          -t us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/sse-server:cache \
+          -f backend/chatbot/Dockerfile backend
+        docker push us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/sse-server:$COMMIT_SHA
+        docker push us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/sse-server:cache
+    env:
+      - 'DOCKER_BUILDKIT=1'
+
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - sse-server-app
+      - --image=us-central1-docker.pkg.dev/$PROJECT_ID/my-backend-repo/sse-server:$COMMIT_SHA
+      - --region=us-central1
+      - --timeout=3600
+      - --cpu=2
+      - --memory=2Gi
+      - --allow-unauthenticated
+      - --min-instances=1
