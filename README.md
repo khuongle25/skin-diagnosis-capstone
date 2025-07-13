@@ -1,6 +1,4 @@
-# XÂY DỰNG HỆ THỐNG CHẨN ĐOÁN
-
-UNG THƯ DA TÍCH HỢP CHATBOT
+# XÂY DỰNG HỆ THỐNG CHẨN ĐOÁN UNG THƯ DA TÍCH HỢP CHATBOT
 
 ### EDA (Exploratory Data Analysis)
 
